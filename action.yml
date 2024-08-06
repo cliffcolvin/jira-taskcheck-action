@@ -1,0 +1,16 @@
+name: 'Jira Task Check Action'
+description: 'Checks if a PR includes a Jira task number in the title or description'
+inputs:
+  project_key:
+    description: 'The Jira project key (e.g., PROJ)'
+    required: true
+  check:
+    description: 'Where to check for the Jira task number (both, title, or description)'
+    required: false
+    default: 'both'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
+branding:
+  icon: 'check-square'
+  color: 'blue'
