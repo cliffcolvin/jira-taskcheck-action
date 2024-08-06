@@ -1,5 +1,7 @@
 {
+  "name": "jira-taskcheck-action",
   "version": "0.0.1",
+  "license": "MIT",
   "scripts": {
     "start": "tsc -w",
     "build": "tsc -p tsconfig.json",
