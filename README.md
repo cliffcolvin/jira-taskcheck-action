@@ -12,12 +12,10 @@ To use this action in your workflow, add the following step to your `.github/wor
 
 ```yaml
 - name: Check Jira Task Number
-  uses: your-username/jira-taskcheck-action@v1
+  uses: cliffcolvin/jira-taskcheck-action@v1
   with:
     # Required: specify the Jira project key
     project_key: 'ABC'
-    # Optional: specify the Jira task number pattern to match
-    jira-task-pattern: '^(?:[A-Z]+-\\d+|\\d+)$'
     # Optional: specify whether to check the title, description, or both
     check: 'title'
 ```
