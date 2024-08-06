@@ -32,7 +32,7 @@ For example, to check both the title and description for a Jira task number, you
 
 ```yaml
 - name: Check Jira Task Number
-  uses: your-username/jira-taskcheck-action@v1
+  uses: cliffcolvin/jira-taskcheck-action@v1
   with:
     project_key: 'ABC'
     check: 'both'
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check Jira Task Number
-        uses: your-username/jira-taskcheck-action@v1
+        uses: cliffcolvin/jira-taskcheck-action@v1
         with:
           project_key: 'ABC'  # Required: specify your Jira project key
           check: 'both'
