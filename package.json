@@ -1,10 +1,10 @@
 {
   "name": "jira-taskcheck-action",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "scripts": {
     "start": "tsc -w",
-    "build": "tsc -p tsconfig.json",
+    "build": "ncc build src/index.ts -o dist",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "prepare": "npm run build"
@@ -17,6 +17,7 @@
     "@types/jest": "^29.5.12",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.4",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "@vercel/ncc": "^0.36.1"
   }
 }

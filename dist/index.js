@@ -56,7 +56,12 @@ async function run() {
             core.setFailed(`PR must include a task number in the format ${projectKey}-XXXX in ${location}.`);
         }
         else {
-            core.info(`Task number found in PR ${check === 'both' ? 'title or description' : check}.`);
+            if (check === 'both') {
+                core.info('Task number found in PR title or description.');
+            }
+            else {
+                core.info(`Task number found in PR ${check}.`);
+            }
         }
     }
     catch (error) {
