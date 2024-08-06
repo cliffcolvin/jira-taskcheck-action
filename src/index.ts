@@ -8,7 +8,7 @@ export async function run(): Promise<void> {
     const prTitle = github.context.payload.pull_request?.title || '';
     const prBody = github.context.payload.pull_request?.body || '';
 
-    const taskPattern = new RegExp(`${projectKey}-\\d+`);
+    const taskPattern = new RegExp(`\\b${projectKey}-\\d+\\b`);
 
     let taskFound = false;
 
