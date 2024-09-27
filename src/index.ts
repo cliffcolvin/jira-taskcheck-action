@@ -5,8 +5,19 @@ export async function run(): Promise<void> {
   try {
     const projectKey = core.getInput('project_key', { required: true });
     const check = core.getInput('check') || 'both';
-    const prTitle = github.context.payload.pull_request?.title || '';
-    const prBody = github.context.payload.pull_request?.body || '';
+    const token = core.getInput('github_token', { required: true });
+
+    const octokit = github.getOctokit(token);
+
+    // Fetch the latest PR information
+    const { data: pullRequest } = await octokit.rest.pulls.get({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: github.context.issue.number,
+    });
+
+    const prTitle = pullRequest.title || '';
+    const prBody = pullRequest.body || '';
 
     const taskPattern = new RegExp(`\\b${projectKey}-\\d+\\b`);
 

@@ -5,51 +5,61 @@ import { run } from '../src';
 jest.mock('@actions/core');
 jest.mock('@actions/github');
 
-// Add these type assertions
 const mockedCore = core as jest.Mocked<typeof core>;
 const mockedGithub = github as jest.Mocked<typeof github>;
 
 describe('PR Task Number Checker', () => {
+  let mockOctokit: any;
+
   beforeEach(() => {
     jest.resetAllMocks();
-    (mockedGithub.context.payload.pull_request as any) = {};
+    mockOctokit = {
+      rest: {
+        pulls: {
+          get: jest.fn(),
+        },
+      },
+    };
+    (mockedGithub.getOctokit as jest.Mock).mockReturnValue(mockOctokit);
+    (mockedGithub.context as any) = {
+      repo: { owner: 'testOwner', repo: 'testRepo' },
+      issue: { number: 1 },
+    };
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'ABC';
       if (name === 'check') return 'both';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
   });
 
   test('should pass when task number is in PR title', async () => {
-    mockedCore.getInput.mockImplementation((name) => {
-      if (name === 'project_key') return 'ABC';
-      if (name === 'check') return 'both';
-      return '';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'ABC-123: Add new feature',
+        body: 'This is the PR body',
+      },
     });
-    mockedGithub.context.payload.pull_request = {
-      title: 'ABC-123: Add new feature',
-      body: 'This is the PR body'
-    } as any;
 
     await run();
     
     expect(mockedCore.setFailed).not.toHaveBeenCalled();
     expect(mockedCore.info).toHaveBeenCalledWith('Task number found in PR title or description.');
-    
-    // Debugging
-    if (mockedCore.setFailed.mock.calls.length > 0) {
-      console.log('setFailed was called with:', mockedCore.setFailed.mock.calls[0][0]);
-    }
   });
 
   test('should pass when task number is in PR body', async () => {
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'XYZ';
       if (name === 'check') return 'both';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
-    mockedGithub.context.payload.pull_request!.title = 'Add new feature';
-    mockedGithub.context.payload.pull_request!.body = 'Implements task XYZ-456';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'Add new feature',
+        body: 'Implements task XYZ-456',
+      },
+    });
 
     await run();
 
@@ -61,10 +71,15 @@ describe('PR Task Number Checker', () => {
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'PRJ';
       if (name === 'check') return 'both';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
-    mockedGithub.context.payload.pull_request!.title = 'Add new feature';
-    mockedGithub.context.payload.pull_request!.body = 'This PR adds a new feature';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'Add new feature',
+        body: 'This PR adds a new feature',
+      },
+    });
 
     await run();
 
@@ -72,7 +87,18 @@ describe('PR Task Number Checker', () => {
   });
 
   test('should handle missing PR title and body', async () => {
-    (mockedCore.getInput as jest.Mock).mockReturnValue('TST');
+    (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
+      if (name === 'project_key') return 'TST';
+      if (name === 'check') return 'both';
+      if (name === 'github_token') return 'fake-token';
+      return '';
+    });
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: '',
+        body: '',
+      },
+    });
 
     await run();
 
@@ -80,33 +106,36 @@ describe('PR Task Number Checker', () => {
   });
 
   test('should handle errors and set failed status', async () => {
-    (mockedCore.getInput as jest.Mock).mockImplementation(() => {
-      throw new Error('Test error');
-    });
+    mockOctokit.rest.pulls.get.mockRejectedValue(new Error('API Error'));
 
     await run();
 
-    expect(mockedCore.setFailed).toHaveBeenCalledWith('Test error');
+    expect(mockedCore.setFailed).toHaveBeenCalledWith('API Error');
   });
 
   test('should handle unexpected errors', async () => {
     (mockedCore.getInput as jest.Mock).mockImplementation(() => {
-      throw 'Unexpected error';
+      throw new Error('Unexpected error');
     });
 
     await run();
 
-    expect(mockedCore.setFailed).toHaveBeenCalledWith('An unexpected error occurred');
+    expect(mockedCore.setFailed).toHaveBeenCalledWith('Unexpected error');
   });
 
   test('should pass when task number is in PR title and check is set to title', async () => {
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'ABC';
       if (name === 'check') return 'title';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
-    mockedGithub.context.payload.pull_request!.title = 'ABC-123: Add new feature';
-    mockedGithub.context.payload.pull_request!.body = 'This PR adds a new feature';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'ABC-123: Add new feature',
+        body: 'This PR adds a new feature',
+      },
+    });
 
     await run();
 
@@ -118,10 +147,15 @@ describe('PR Task Number Checker', () => {
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'ABC';
       if (name === 'check') return 'title';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
-    mockedGithub.context.payload.pull_request!.title = 'Add new feature';
-    mockedGithub.context.payload.pull_request!.body = 'Implements task ABC-456';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'Add new feature',
+        body: 'Implements task ABC-456',
+      },
+    });
 
     await run();
 
@@ -132,10 +166,15 @@ describe('PR Task Number Checker', () => {
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'ABC';
       if (name === 'check') return 'description';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
-    mockedGithub.context.payload.pull_request!.title = 'Add new feature';
-    mockedGithub.context.payload.pull_request!.body = 'Implements task ABC-456';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'Add new feature',
+        body: 'Implements task ABC-456',
+      },
+    });
 
     await run();
 
@@ -147,10 +186,15 @@ describe('PR Task Number Checker', () => {
     (mockedCore.getInput as jest.Mock).mockImplementation((name) => {
       if (name === 'project_key') return 'ABC';
       if (name === 'check') return 'description';
+      if (name === 'github_token') return 'fake-token';
       return '';
     });
-    mockedGithub.context.payload.pull_request!.title = 'ABC-123: Add new feature';
-    mockedGithub.context.payload.pull_request!.body = 'This PR adds a new feature';
+    mockOctokit.rest.pulls.get.mockResolvedValue({
+      data: {
+        title: 'ABC-123: Add new feature',
+        body: 'This PR adds a new feature',
+      },
+    });
 
     await run();
 
